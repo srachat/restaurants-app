@@ -18,45 +18,72 @@ class MenuParser(metaclass=ABCMeta):
     restaurant_name = None
 
     @classmethod
-    def get_menu(cls) -> str:
-        return cls.fetch_from_db() or cls.parse_from_web()
+    def get_menu(cls) -> Optional[dict]:
+        return cls.fetch_from_db() or cls.get_parsed_from_web()
 
     @classmethod
     def fetch_from_db(cls) -> Optional[dict]:
         return db.get(cls.restaurant_name, None)
 
     @classmethod
+    def get_parsed_from_web(cls) -> Optional[dict]:
+        main_dish = cls.parse_main_dish()
+        soup = cls.parse_soup()
+        cls.populate_db(main_dish, soup)
+        return cls.fetch_from_db()
+
+    @classmethod
     @abstractmethod
-    def parse_from_web(cls):
+    def parse_main_dish(cls) -> str:
         raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def parse_soup(cls) -> str:
+        raise NotImplementedError
+
+    @classmethod
+    def populate_db(cls, main_dish: str, soup: str):
+        db[cls.restaurant_name] = {
+            "main_dish": main_dish,
+            "soup": soup,
+        }
 
 
 class FirstParser(MenuParser):
-    restaurant_name = "restaurant_1"
+    @classmethod
+    def parse_main_dish(cls) -> str:
+        pass
 
     @classmethod
-    def parse_from_web(cls):
+    def parse_soup(cls) -> str:
         pass
+
+    restaurant_name = "restaurant_1"
 
 
 class SecondParser(MenuParser):
-    restaurant_name = "restaurant_2"
+    @classmethod
+    def parse_main_dish(cls) -> str:
+        pass
 
     @classmethod
-    def parse_from_web(cls):
+    def parse_soup(cls) -> str:
         pass
+
+    restaurant_name = "restaurant_2"
 
 
 class ThirdParser(MenuParser):
-    restaurant_name = "restaurant_3"
+    @classmethod
+    def parse_main_dish(cls) -> str:
+        return "this is some other dish"
 
     @classmethod
-    def parse_from_web(cls):
-        db[cls.restaurant_name] = {
-            "main_dish": "another_variant",
-            "soup": "another",
-        }
-        return db[cls.restaurant_name]
+    def parse_soup(cls) -> str:
+        return "this is some other soup"
+
+    restaurant_name = "restaurant_3"
 
 
 class MenuFactory:
@@ -84,8 +111,10 @@ class MenuDispatcher:
 
 def main():
     restaurants = "restaurant_1 restaurant_2 restaurant_3 restaurant_4"
+    print(db)
     menu = MenuDispatcher.create_menu_json(restaurants)
     print(menu)
+    print(db)
 
 
 if __name__ == "__main__":
