@@ -86,33 +86,30 @@ class ThirdParser(MenuParser):
     restaurant_name = "restaurant_3"
 
 
-class MenuFactory:
-    restaurants_mapping = {
-        FirstParser.restaurant_name: FirstParser,
-        SecondParser.restaurant_name: SecondParser,
-        ThirdParser.restaurant_name: ThirdParser,
+restaurants_mapping = {
+    FirstParser.restaurant_name: FirstParser,
+    SecondParser.restaurant_name: SecondParser,
+    ThirdParser.restaurant_name: ThirdParser,
+}
+
+
+def restaurant_factory(restaurant_name: str) -> MenuParser:
+    return restaurants_mapping.get(restaurant_name, MenuParser)
+
+
+def create_menu_json(restaurants: str) -> dict:
+    separate_restaurants = restaurants.split(" ")
+    return {
+        restaurant: restaurant_factory(restaurant).get_menu()
+        for restaurant in separate_restaurants
+        if restaurant in restaurants_mapping.keys()
     }
-
-    @staticmethod
-    def factory(restaurant_name: str) -> MenuParser:
-        return MenuFactory.restaurants_mapping.get(restaurant_name, MenuParser)
-
-
-class MenuDispatcher:
-    @staticmethod
-    def create_menu_json(restaurants: str) -> dict:
-        separate_restaurants = restaurants.split(" ")
-        return {
-            restaurant: MenuFactory.factory(restaurant).get_menu()
-            for restaurant in separate_restaurants
-            if restaurant in MenuFactory.restaurants_mapping.keys()
-        }
 
 
 def main():
     restaurants = "restaurant_1 restaurant_2 restaurant_3 restaurant_4"
     print(db)
-    menu = MenuDispatcher.create_menu_json(restaurants)
+    menu = create_menu_json(restaurants)
     print(menu)
     print(db)
 
