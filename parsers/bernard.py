@@ -1,6 +1,6 @@
 from typing import Tuple
 
-from bs4 import Tag
+from bs4 import Tag, BeautifulSoup
 
 from parsers.abstract_parser import AbstractParser, Dish
 
@@ -14,7 +14,7 @@ def transform_dish_to_tuple(dish_element: Tag) -> Tuple[str, str, str]:
 
 class BernardParser(AbstractParser):
     @classmethod
-    def parse_main_dishes(cls) -> Tuple[Dish, ...]:
+    def parse_main_dishes(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
         content = cls.get_page_content()
 
         daily_menu = content.find_all("section", {"class", "daily-menu"})[0]
@@ -24,7 +24,7 @@ class BernardParser(AbstractParser):
         return readable_dishes_list
 
     @classmethod
-    def parse_soups(cls) -> Tuple[Dish, ...]:
+    def parse_soups(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
         return tuple()
 
     restaurant_name = "bernard"

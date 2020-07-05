@@ -9,6 +9,9 @@ Menu = Dict[str, List[Dict[str, str]]]
 
 db = {}
 
+MAIN_DISHES = "main_dishes"
+SOUPS = "soups"
+
 
 class AbstractParser(metaclass=ABCMeta):
     restaurant_name: Optional[str] = None
@@ -30,19 +33,21 @@ class AbstractParser(metaclass=ABCMeta):
 
     @classmethod
     def parse_menu(cls) -> Menu:
-        main_dishes = cls.parse_main_dishes_and_convert_to_json()
-        soups = cls.parse_soups_and_convert_to_json()
+        main_dishes = cls.parse_dishes_and_convert_to_json(MAIN_DISHES)
+        soups = cls.parse_dishes_and_convert_to_json(SOUPS)
         return cls.create_menu_dict(main_dishes, soups)
 
     @classmethod
-    def parse_main_dishes_and_convert_to_json(cls) -> List[Dict[str, str]]:
-        main_dishes = cls.parse_main_dishes()
-        return [cls.convert_dish_to_json(dish) for dish in main_dishes]
-
-    @classmethod
-    def parse_soups_and_convert_to_json(cls) -> List[Dict[str, str]]:
-        soups = cls.parse_soups()
-        return [cls.convert_dish_to_json(dish) for dish in soups]
+    def parse_dishes_and_convert_to_json(cls, dish_type: str) -> List[Dict[str, str]]:
+        content = cls.get_page_content()
+        if dish_type == MAIN_DISHES:
+            dishes = cls.parse_main_dishes(content)
+        elif dish_type == SOUPS:
+            dishes = cls.parse_soups(content)
+        else:
+            raise ValueError(f"Incorrect dish_type provided: {dish_type}. "
+                             f"Please provide either {MAIN_DISHES} or {SOUPS}")
+        return [cls.convert_dish_to_json(dish) for dish in dishes]
 
     @classmethod
     def convert_dish_to_json(cls, dish: Dish) -> Dict[str, str]:
@@ -55,18 +60,18 @@ class AbstractParser(metaclass=ABCMeta):
     @classmethod
     def create_menu_dict(cls, main_dishes: List[Dict[str, str]], soups: List[Dict[str, str]]) -> Menu:
         return {
-            "main_dishes": main_dishes,
-            "soups": soups,
+            MAIN_DISHES: main_dishes,
+            SOUPS: soups,
         }
 
     @classmethod
     @abstractmethod
-    def parse_main_dishes(cls) -> Tuple[Dish, ...]:
+    def parse_main_dishes(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
         raise NotImplementedError
 
     @classmethod
     @abstractmethod
-    def parse_soups(cls) -> Tuple[Dish, ...]:
+    def parse_soups(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
         raise NotImplementedError
 
     @classmethod
