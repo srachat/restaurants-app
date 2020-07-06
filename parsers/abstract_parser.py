@@ -2,15 +2,12 @@ from abc import ABCMeta, abstractmethod
 from typing import Dict, Optional, Tuple, List
 
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup, Tag
 
-Dish = Tuple[str, str, str]
-Menu = Dict[str, List[Dict[str, str]]]
+from models.menu import Menu
+from models.dish import Dish
 
 db = {}
-
-MAIN_DISHES = "main_dishes"
-SOUPS = "soups"
 
 
 class AbstractParser(metaclass=ABCMeta):
@@ -18,69 +15,66 @@ class AbstractParser(metaclass=ABCMeta):
     url: Optional[str] = None
 
     @classmethod
-    def get_menu(cls) -> Optional[Menu]:
-        return cls.fetch_from_db() or cls.get_parsed_from_web()
+    def get_menu(cls) -> Menu:
+        return cls.fetch_from_db() or cls.parse_from_web_and_save_to_db()
 
     @classmethod
     def fetch_from_db(cls) -> Optional[dict]:
         return db.get(cls.restaurant_name, None)
 
     @classmethod
-    def get_parsed_from_web(cls) -> Menu:
+    def parse_from_web_and_save_to_db(cls) -> Menu:
         menu = cls.parse_menu()
         # save menu to db
         return menu
 
     @classmethod
     def parse_menu(cls) -> Menu:
-        main_dishes = cls.parse_dishes_and_convert_to_json(MAIN_DISHES)
-        soups = cls.parse_dishes_and_convert_to_json(SOUPS)
-        return cls.create_menu_dict(main_dishes, soups)
-
-    @classmethod
-    def parse_dishes_and_convert_to_json(cls, dish_type: str) -> List[Dict[str, str]]:
         content = cls.get_page_content()
-        if dish_type == MAIN_DISHES:
-            dishes = cls.parse_main_dishes(content)
-        elif dish_type == SOUPS:
-            dishes = cls.parse_soups(content)
-        else:
-            raise ValueError(f"Incorrect dish_type provided: {dish_type}. "
-                             f"Please provide either {MAIN_DISHES} or {SOUPS}")
-        return [cls.convert_dish_to_json(dish) for dish in dishes]
+        main_dishes = cls.parse_main_dishes(content)
+        soups = cls.parse_soups(content)
+        return Menu(main_dishes, soups)
 
     @classmethod
-    def convert_dish_to_json(cls, dish: Dish) -> Dict[str, str]:
-        return {
-            "name": dish[0],
-            "description": dish[1],
-            "price": dish[2],
-        }
+    def parse_main_dishes(cls, content: BeautifulSoup) -> List[Dish]:
+        main_dish_elements = cls.find_main_dish_elements(content)
+        return cls.transform_elements_to_dishes(main_dish_elements)
 
     @classmethod
-    def create_menu_dict(cls, main_dishes: List[Dict[str, str]], soups: List[Dict[str, str]]) -> Menu:
-        return {
-            MAIN_DISHES: main_dishes,
-            SOUPS: soups,
-        }
+    def parse_soups(cls, content: BeautifulSoup) -> List[Dish]:
+        soup_elements = cls.find_soup_elements(content)
+        return cls.transform_elements_to_dishes(soup_elements)
 
     @classmethod
-    @abstractmethod
-    def parse_main_dishes(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
-        raise NotImplementedError
+    def transform_elements_to_dishes(cls, dish_elements: List[Tag]) -> List[Dish]:
+        return list(map(
+            lambda element: cls.transform_element_to_dish(element),
+            dish_elements
+        ))
 
     @classmethod
-    @abstractmethod
-    def parse_soups(cls, content: BeautifulSoup) -> Tuple[Dish, ...]:
-        raise NotImplementedError
-
-    @classmethod
-    def populate_db(cls, main_dishes: Dict[str, str], soups: Dict[str, str]):
+    def populate_db(cls, main_dishes: List[Dish], soups: List[Dish]):
         pass
 
     @classmethod
     def get_page_content(cls) -> BeautifulSoup:
         request = requests.get(cls.url)
         return BeautifulSoup(request.content, 'html.parser')
+
+    # Methods that should be overwritten
+    @classmethod
+    @abstractmethod
+    def find_main_dish_elements(cls, content: BeautifulSoup):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def find_soup_elements(cls, content: BeautifulSoup):
+        raise NotImplementedError
+
+    @classmethod
+    @abstractmethod
+    def transform_element_to_dish(cls, dish_element: Tag) -> Dish:
+        raise NotImplementedError
 
 
