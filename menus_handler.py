@@ -5,7 +5,7 @@ from parsers import create_menu_json
 app = Flask(__name__)
 
 
-@app.route("/menu")
+@app.route("/menu", methods=["POST"])
 def get_menu():
     restaurants = request.form["restaurants"]
     menu = create_menu_json(restaurants)
