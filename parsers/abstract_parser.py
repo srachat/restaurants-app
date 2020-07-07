@@ -1,11 +1,12 @@
 from abc import ABCMeta, abstractmethod
-from typing import Dict, Optional, Tuple, List
+from typing import Optional, List, Any, Dict
 
 import requests
 from bs4 import BeautifulSoup, Tag
 
 from models.menu import Menu
 from models.dish import Dish
+from slack_json_builder import create_divider, create_section, create_markdown
 
 db = {}
 
@@ -60,6 +61,15 @@ class AbstractParser(metaclass=ABCMeta):
     def get_page_content(cls) -> BeautifulSoup:
         request = requests.get(cls.url)
         return BeautifulSoup(request.content, 'html.parser')
+
+    @classmethod
+    def to_map(cls) -> List[Dict[str, Any]]:
+        return [
+            create_divider(),
+            create_section(create_markdown(f"*<{cls.url}|{cls.restaurant_name}>*")),
+            *cls.get_menu().to_map(),
+            create_divider()
+        ]
 
     # Methods that should be overwritten
     @classmethod

@@ -16,7 +16,9 @@ def create_menu_json(restaurants: str) -> dict:
     else:
         separate_restaurants = restaurants.split(" ")
     return {
-        restaurant: restaurant_factory(restaurant.lower()).get_menu().to_map()
-        for restaurant in separate_restaurants
-        if restaurant in restaurants_mapping.keys()
+        "blocks": [
+            restaurant_factory(restaurant.lower()).to_map()
+            for restaurant in separate_restaurants
+            if restaurant in restaurants_mapping.keys()
+        ]
     }
