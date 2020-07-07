@@ -13,7 +13,15 @@ class Menu(ShouldBeMapped):
 	def to_map(self) -> List[Dict[str, Any]]:
 		return [
 			create_section(create_markdown("`Main dishes`")),
-			create_element_of_type("section", "fields", [dish.to_map() for dish in self.main_dishes]),
+			create_element_of_type(
+				"section",
+				"fields",
+				[dish.to_map() for dish in self.main_dishes] or [create_markdown("No main dishes available")]
+			),
 			create_section(create_markdown("`Soups`")),
-			create_element_of_type("section", "fields", [soup.to_map() for soup in self.soups]),
+			create_element_of_type(
+				"section",
+				"fields",
+				[soup.to_map() for soup in self.soups] or [create_markdown("No soups available")]
+			),
 		]
