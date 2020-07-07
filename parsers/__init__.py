@@ -1,3 +1,5 @@
+from typing import Optional
+
 from parsers.abstract_parser import AbstractParser
 from parsers.bernard import BernardParser
 
@@ -10,8 +12,11 @@ def restaurant_factory(restaurant_name: str) -> AbstractParser:
     return restaurants_mapping.get(restaurant_name, AbstractParser)
 
 
-def create_menu_json(restaurants: str) -> dict:
-    separate_restaurants = restaurants.split(" ")
+def create_menu_json(restaurants: Optional[str]) -> dict:
+    if restaurants is None:
+        separate_restaurants = list(restaurants_mapping.keys())
+    else:
+        separate_restaurants = restaurants.split(" ")
     return {
         restaurant: restaurant_factory(restaurant.lower()).get_menu().to_map()
         for restaurant in separate_restaurants
