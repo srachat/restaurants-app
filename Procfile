@@ -1,0 +1,1 @@
+web: gunicorn menus_handler:app
