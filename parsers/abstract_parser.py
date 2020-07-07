@@ -76,5 +76,3 @@ class AbstractParser(metaclass=ABCMeta):
     @abstractmethod
     def transform_element_to_dish(cls, dish_element: Tag) -> Dish:
         raise NotImplementedError
-
-

@@ -13,7 +13,7 @@ def restaurant_factory(restaurant_name: str) -> AbstractParser:
 def create_menu_json(restaurants: str) -> dict:
     separate_restaurants = restaurants.split(" ")
     return {
-        restaurant: restaurant_factory(restaurant).get_menu().to_map()
+        restaurant: restaurant_factory(restaurant.lower()).get_menu().to_map()
         for restaurant in separate_restaurants
         if restaurant in restaurants_mapping.keys()
     }
